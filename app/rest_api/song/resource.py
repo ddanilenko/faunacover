@@ -1,26 +1,25 @@
 import random
 
-from flask import request
+from flask import request, current_app
 from flask_restful import Resource, marshal_with, abort
 from sqlalchemy import update as upd, delete
 
-from app import application
-from app.database import session
-from app.models.song import Song
-from .schemas import song_schema, new_song_schema, extended_song_schema
-from .parsers import get_song_parser, post_song_parser, put_song_parser
 from app.authorisation import auth
-from app.rest_api.validators import check_song_and_group_pair
+from app.config import Config
 from app.helpers import add_group_or_song
+from app.models.song import Song
+from app.rest_api.validators import check_song_and_group_pair
+from .parsers import get_song_parser, post_song_parser, put_song_parser
+from .schemas import song_schema, new_song_schema, extended_song_schema
 
 
 class SongResource(Resource):
 
     @marshal_with(extended_song_schema)
-    def get(self, song_id=None, page=1, per_page=application.config.get('SONG_PER_PAGE')):
+    def get(self, song_id=None, page=1, per_page=Config.SONG_PER_PAGE):
         args = get_song_parser.parse_args()
         if song_id:
-            song = session.query(Song).filter_by(id=song_id).first()
+            song = current_app.session.query(Song).filter_by(id=song_id).first()
             if not song:
                 abort(404, message='There is no song with such id')
             return song, 200
@@ -29,7 +28,7 @@ class SongResource(Resource):
                 page = args.get('page')
             if args.get('per_page'):
                 per_page = args.get('per_page')
-            songs = session.query(Song).slice((page - 1) * per_page, page * per_page).all()
+            songs = current_app.session.query(Song).slice((page - 1) * per_page, page * per_page).all()
             return songs, 200
 
     def put(self, song_id):
@@ -37,11 +36,11 @@ class SongResource(Resource):
         if not check_song_and_group_pair(args):
             abort(400, message='Such song from this group already exists')
         try:
-            session.execute(upd(Song).where(Song.id == song_id).values(**args))
-            session.commit()
+            current_app.session.execute(upd(Song).where(Song.id == song_id).values(**args))
+            current_app.session.commit()
 
         except Exception as e:
-            session.rollback()
+            current_app.session.rollback()
             abort(400, message='Text and youtube link should be unique')
         return 200
 
@@ -57,10 +56,10 @@ class SongResource(Resource):
 
     def delete(self, song_id):
         try:
-            session.execute(delete(Song).where(Song.id == song_id))
-            session.commit()
+            current_app.session.execute(delete(Song).where(Song.id == song_id))
+            current_app.session.commit()
         except Exception as e:
-            session.rollback()
+            current_app.session.rollback()
         return 200
 
 
@@ -71,10 +70,10 @@ class CreateSongByGroupId(Resource):
     def get(self, group_id):
         args = get_song_parser.parse_args()
         if args.get('lines') is None:
-            args['lines'] = application.config.get('MAX_SONG_LENGTH_IN_LINES')
-        if args.get('lines') > application.config.get('MAX_SONG_LENGTH_IN_LINES'):
+            args['lines'] = Config.MAX_SONG_LENGTH_IN_LINES
+        if args.get('lines') > Config.MAX_SONG_LENGTH_IN_LINES:
             abort(400, message="The song can't have more than 50 lines. Please choose another number of lines")
-        songs = session.query(Song).filter_by(group_id=group_id).all()
+        songs = current_app.session.query(Song).filter_by(group_id=group_id).all()
         if songs:
             texts = '\n'.join([song.text for song in songs])
             lines = texts.split('\n')

@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String
 from passlib.apps import custom_app_context as pwd_context
 
-from app.database import Base
+from app import Base
 
 
 class UserProfile(Base):

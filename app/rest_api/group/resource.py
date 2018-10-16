@@ -1,8 +1,9 @@
+from flask import current_app
 from flask_restful import Resource, marshal_with, abort, marshal, request
 from sqlalchemy import update as upd, delete
 
-from app import application
-from app.database import session
+
+from app.config import Config
 from app.models.group import Group
 from app.helpers import add_group_or_song
 from .schemas import base_group_schema, extended_group_schema
@@ -11,10 +12,10 @@ from .parsers import get_group_parser, put_group_parser, post_group_parser
 
 class GroupResource(Resource):
 
-    def get(self, group_id=None, page=1, per_page=application.config.get('GROUP_PER_PAGE')):
+    def get(self, group_id=None, page=1, per_page=Config.GROUP_PER_PAGE):
         args = get_group_parser.parse_args()
         if group_id:
-            group = session.query(Group).filter_by(id=group_id).first()
+            group = current_app.session.query(Group).filter_by(id=group_id).first()
             if not group:
                 abort(404, message='There is no group with such id')
             if args.get('extended'):
@@ -26,7 +27,7 @@ class GroupResource(Resource):
                 page = args.get('page')
             if args.get('per_page'):
                 per_page = args.get('per_page')
-            groups = session.query(Group).slice((page - 1) * per_page, page * per_page).all()
+            groups = current_app.session.query(Group).slice((page - 1) * per_page, page * per_page).all()
             if not groups:
                 abort(404, message='Unfortunately, we have not groups yet')
             return marshal(groups, base_group_schema), 200
@@ -34,10 +35,10 @@ class GroupResource(Resource):
     def put(self, group_id):
         args = put_group_parser.parse_args()
         try:
-            session.execute(upd(Group).where(Group.id == group_id).values(**args))
-            session.commit()
+            current_app.session.execute(upd(Group).where(Group.id == group_id).values(**args))
+            current_app.session.commit()
         except Exception as e:
-            session.rollback()
+            current_app.session.rollback()
             abort(400, message='Group name and official site link should be unique')
         return 200
 
@@ -53,8 +54,8 @@ class GroupResource(Resource):
 
     def delete(self, group_id):
         try:
-            session.execute(delete(Group).where(Group.id == group_id))
-            session.commit()
+            current_app.session.execute(delete(Group).where(Group.id == group_id))
+            current_app.session.commit()
         except Exception as e:
-            session.rollback()
+            current_app.session.rollback()
         return 200

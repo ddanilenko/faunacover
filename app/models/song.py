@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey
 from sqlalchemy.orm import clear_mappers
 
-from app.database import Base
+from app import Base
 
 
 class Song(Base):

@@ -1,6 +1,5 @@
+from flask import current_app
 from flask_restful import abort
-
-from app.database import session
 
 
 def add_group_or_song(instance_list, parser, model, validators=[]):
@@ -14,10 +13,10 @@ def add_group_or_song(instance_list, parser, model, validators=[]):
                 abort(400, message=validator.get('error_text'))
         try:
             instance = model(**args)
-            session.add(instance)
-            session.commit()
+            current_app.session.add(instance)
+            current_app.session.commit()
             added_instance.append(instance)
         except Exception as e:
-            session.rollback()
+            current_app.session.rollback()
 
     return added_instance
