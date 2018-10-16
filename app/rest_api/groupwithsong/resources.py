@@ -1,0 +1,31 @@
+from flask import request
+from flask_restful import Resource, marshal_with
+
+from app.database import session
+from app.helpers import add_group_or_song
+from app.models.group import Group
+from app.rest_api.group.parsers import post_group_parser
+from app.models.song import Song
+from app.rest_api.song.parsers import post_song_parser
+from app.rest_api.validators import check_song_and_group_pair
+from app.rest_api.group.schemas import extended_group_schema
+
+
+class GroupWithSongResource(Resource):
+
+    @marshal_with(extended_group_schema)
+    def post(self):
+        group_list = request.json[:]
+        song_list = [dict(song, group_name=group.get('name')) for group in group_list for song in group.get('songs')]
+        added_groups = []
+        if group_list:
+            added_groups = add_group_or_song(group_list, post_group_parser, Group)
+            for song in song_list:
+                group = session.query(Group).filter_by(name=song.get('group_name')).first()
+                if group:
+                    song['group_id'] = group.id
+            add_group_or_song(song_list, post_song_parser, Song,
+                              validators=[{'func': check_song_and_group_pair,
+                                           'error_text': 'Such song from this group already exists'}])
+
+        return added_groups, 201

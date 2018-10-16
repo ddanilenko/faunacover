@@ -1,0 +1,7 @@
+psycopg2
+passlib
+flask
+werkzeug
+sqlalchemy
+flask_restful
+flask_httpauth
