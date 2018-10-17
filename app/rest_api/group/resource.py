@@ -33,6 +33,9 @@ class GroupResource(Resource):
             return marshal(groups, base_group_schema), 200
 
     def put(self, group_id):
+        group = current_app.session.query(Group).filter_by(id=group_id).first()
+        if group is None:
+            abort(404, message="There is no group with such id")
         args = put_group_parser.parse_args()
         try:
             current_app.session.execute(upd(Group).where(Group.id == group_id).values(**args))
@@ -44,15 +47,22 @@ class GroupResource(Resource):
 
     @marshal_with(extended_group_schema)
     def post(self):
-        group_list = request.json[:]
+        group_list = []
+        if isinstance(request.json, dict):
+            group_list.append(request.json)
+        if isinstance(request.json, list):
+            group_list.extend(request.json)
         if not group_list:
-            abort(400, message='your request is empty!')
+            abort(400, message='your request is inappropriate!')
         added_groups = add_group_or_song(group_list, post_group_parser, Group)
         if not added_groups:
             abort(400, message='Nothing was added due to error in uploaded data')
         return added_groups, 201
 
     def delete(self, group_id):
+        group = current_app.session.query(Group).filter_by(id=group_id).first()
+        if group is None:
+            abort(404, message="There is no group with such id")
         try:
             current_app.session.execute(delete(Group).where(Group.id == group_id))
             current_app.session.commit()

@@ -19,7 +19,7 @@ class UserProfileResource(Resource):
             if not user:
                 abort(404, message='There is no user with such id')
         else:
-            abort(405, message='you need to send POST request')
+            abort(405, message='you need to specify the user id')
         return user, 200
 
     @marshal_with(user_profile_schema)

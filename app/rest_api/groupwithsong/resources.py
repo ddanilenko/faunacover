@@ -1,5 +1,5 @@
 from flask import request, current_app
-from flask_restful import Resource, marshal_with
+from flask_restful import Resource, marshal_with, abort
 
 from app.helpers import add_group_or_song
 from app.models.group import Group
@@ -14,8 +14,17 @@ class GroupWithSongResource(Resource):
 
     @marshal_with(extended_group_schema)
     def post(self):
-        group_list = request.json[:]
-        song_list = [dict(song, group_name=group.get('name')) for group in group_list for song in group.get('songs')]
+        group_list = []
+        if isinstance(request.json, dict):
+            group_list.append(request.json)
+        if isinstance(request.json, list):
+            group_list.extend(request.json)
+        if not group_list:
+            abort(400, message='your request is inappropriate!')
+        try:
+            song_list = [dict(song, group_name=group.get('name')) for group in group_list for song in group.get('songs')]
+        except TypeError as e:
+            song_list = []
         added_groups = []
         if group_list:
             added_groups = add_group_or_song(group_list, post_group_parser, Group)
