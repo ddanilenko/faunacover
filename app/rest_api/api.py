@@ -1,9 +1,9 @@
 from flask_restful import Api
 
-from rest_api.group.resource import GroupResource
-from rest_api.groupwithsong.resources import GroupWithSongResource
-from rest_api.song.resource import SongResource, CreateSongByGroupId
-from rest_api.userprofile.resource import UserProfileResource
+from app.rest_api.group.resource import GroupResource
+from app.rest_api.groupwithsong.resources import GroupWithSongResource
+from app.rest_api.song.resource import SongResource, CreateSongByGroupId
+from app.rest_api.userprofile.resource import UserProfileResource
 
 
 def create_api(application):

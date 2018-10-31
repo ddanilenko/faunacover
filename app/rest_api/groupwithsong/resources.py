@@ -21,10 +21,8 @@ class GroupWithSongResource(Resource):
             group_list.extend(request.json)
         if not group_list:
             abort(400, message='your request is inappropriate!')
-        try:
-            song_list = [dict(song, group_name=group.get('name')) for group in group_list for song in group.get('songs')]
-        except TypeError as e:
-            song_list = []
+        song_list = [dict(song, group_name=group.get('name')) for group in group_list for song in
+                     group.get('songs', list())]
         added_groups = []
         if group_list:
             added_groups = add_group_or_song(group_list, post_group_parser, Group)

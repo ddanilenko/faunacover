@@ -1,4 +1,3 @@
-app/config.py
 .pytest_cache
 
 # Byte-compiled / optimized / DLL files
@@ -106,8 +105,6 @@ ENV/
 # other git ignore files
 .idea/*
 
-
-config.py
 
 /node_modules
 /static

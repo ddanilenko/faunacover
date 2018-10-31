@@ -22,15 +22,14 @@ class GroupResource(Resource):
                 return marshal(group, extended_group_schema), 200
             else:
                 return marshal(group, base_group_schema), 200
-        else:
-            if args.get('page'):
-                page = args.get('page')
-            if args.get('per_page'):
-                per_page = args.get('per_page')
-            groups = current_app.session.query(Group).slice((page - 1) * per_page, page * per_page).all()
-            if not groups:
-                abort(404, message='Unfortunately, we have not groups yet')
-            return marshal(groups, base_group_schema), 200
+        if args.get('page'):
+            page = args.get('page')
+        if args.get('per_page'):
+            per_page = args.get('per_page')
+        groups = current_app.session.query(Group).slice((page - 1) * per_page, page * per_page).all()
+        if not groups:
+            abort(404, message='Unfortunately, we have not groups yet')
+        return marshal(groups, base_group_schema), 200
 
     def put(self, group_id):
         group = current_app.session.query(Group).filter_by(id=group_id).first()
@@ -68,4 +67,4 @@ class GroupResource(Resource):
             current_app.session.commit()
         except Exception as e:
             current_app.session.rollback()
-        return 200
+        return 204
